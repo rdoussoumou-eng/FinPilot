@@ -16,6 +16,11 @@ export interface Transaction {
   account: string;
   amount: number; // negative = expense
   status: "cleared" | "pending";
+  /** Raw fields needed to populate an edit form — only set on the Transactions page. */
+  occurredOn?: string;
+  categoryId?: string | null;
+  accountId?: string | null;
+  paymentMode?: string | null;
 }
 
 export interface CategorySpend {
@@ -30,4 +35,4 @@ export type IconName =
   | "wallet" | "trendingUp" | "trendingDown" | "piggyBank" | "target" | "barChart"
   | "search" | "bell" | "moon" | "sun" | "settings" | "chevronRight" | "plus"
   | "food" | "car" | "home" | "graduation" | "party" | "phone" | "bolt" | "wifi"
-  | "calendar" | "sparkles" | "arrowRight" | "checkCircle" | "clock" | "menu" | "x" | "info";
+  | "calendar" | "sparkles" | "arrowRight" | "checkCircle" | "clock" | "menu" | "x" | "info" | "edit";

@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { ensureDefaultData } from "@/lib/queries";
 import { Sidebar } from "@/components/layout/sidebar";
+import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
+import { markGuideSeen } from "./onboarding-actions";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -21,6 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      {!user.user_metadata?.guide_seen && <WelcomeGuide onDismiss={markGuideSeen} />}
     </div>
   );
 }

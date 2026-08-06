@@ -2,7 +2,7 @@ import {
   Wallet, TrendingUp, TrendingDown, PiggyBank, Target, BarChart3,
   Search, Bell, Moon, Sun, Settings, ChevronRight, Plus,
   UtensilsCrossed, Car, Home, GraduationCap, PartyPopper, Smartphone, Zap, Wifi,
-  Calendar, Sparkles, ArrowRight, CheckCircle2, Clock, Menu, X, Info,
+  Calendar, Sparkles, ArrowRight, CheckCircle2, Clock, Menu, X, Info, Pencil,
   type LucideProps,
 } from "lucide-react";
 import type { IconName } from "@/types/finance";
@@ -37,6 +37,7 @@ const registry: Record<IconName, React.ComponentType<LucideProps>> = {
   menu: Menu,
   x: X,
   info: Info,
+  edit: Pencil,
 };
 
 export function Icon({ name, className, ...props }: { name: IconName } & LucideProps) {

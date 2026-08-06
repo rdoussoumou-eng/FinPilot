@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getAccounts, getAllTransactions, getCategories } from "@/lib/queries";
 import { TransactionsTable } from "@/components/dashboard/transactions-table";
-import { addTransaction, deleteTransaction } from "./actions";
+import { addTransaction, deleteTransaction, updateTransaction } from "./actions";
 import type { Transaction } from "@/types/finance";
 import { parseLocalDate, todayLocalISODate } from "@/lib/format";
 
@@ -25,6 +25,10 @@ export default async function TransactionsPage() {
     account: t.account_id ? accountName.get(t.account_id) ?? "—" : "—",
     amount: t.amount,
     status: t.status,
+    occurredOn: t.occurred_on,
+    categoryId: t.category_id,
+    accountId: t.account_id,
+    paymentMode: t.payment_mode,
   }));
 
   const today = todayLocalISODate();
@@ -33,7 +37,7 @@ export default async function TransactionsPage() {
     <>
       <TopBar title="Transactions" userEmail={user?.email} />
       <main className="container flex flex-col gap-6 py-6">
-        <details id="new" open className="group rounded-xl border border-border bg-card shadow-card open:shadow-card-hover">
+        <details id="new" open={rows.length === 0} className="group rounded-xl border border-border bg-card shadow-card open:shadow-card-hover">
           <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-4 text-[13.5px] font-semibold text-foreground">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold text-white transition-transform group-open:rotate-45">
               <Icon name="plus" className="h-3.5 w-3.5" />
@@ -84,7 +88,13 @@ export default async function TransactionsPage() {
           </form>
         </details>
 
-        <TransactionsTable transactions={transactions} onDelete={deleteTransaction} />
+        <TransactionsTable
+          transactions={transactions}
+          categories={categories}
+          accounts={accounts}
+          onDelete={deleteTransaction}
+          onUpdate={updateTransaction}
+        />
       </main>
     </>
   );
