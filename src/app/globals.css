@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 97%;      /* warm paper, close to the workbook's F4F5F7 */
+    --foreground: 221 47% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 221 47% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 221 47% 14%;
+    --primary: 221 47% 20%;          /* navy #1B2A4A */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 221 47% 20%;
+    --muted: 210 16% 93%;
+    --muted-foreground: 220 12% 46%;
+    --accent: 36 55% 94%;            /* pale gold wash, hover/active states */
+    --accent-foreground: 221 47% 20%;
+    --destructive: 6 63% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 16% 88%;
+    --input: 220 16% 88%;
+    --ring: 36 36% 52%;
+
+    --brand-navy: 221 47% 20%;
+    --brand-navy-soft: 220 37% 30%;
+    --brand-gold: 36 36% 52%;
+    --brand-gold-soft: 36 45% 76%;
+    --success: 145 64% 32%;
+    --danger: 6 63% 46%;
+    --warn: 28 72% 41%;               /* deliberately distinct from --brand-gold — see design note in ai-insights-card.tsx */
+
+    --radius: 14px;
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Georgia", "Iowan Old Style", serif;
+  }
+
+  .dark {
+    --background: 222 32% 8%;
+    --foreground: 210 20% 96%;
+    --card: 222 28% 11%;
+    --card-foreground: 210 20% 96%;
+    --popover: 222 28% 11%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 36 45% 62%;           /* gold carries the accent once navy becomes the surface */
+    --primary-foreground: 222 32% 10%;
+    --secondary: 222 24% 16%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 222 22% 16%;
+    --muted-foreground: 218 12% 65%;
+    --accent: 222 24% 18%;
+    --accent-foreground: 36 45% 70%;
+    --destructive: 6 70% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 20% 20%;
+    --input: 222 20% 20%;
+    --ring: 36 45% 62%;
+
+    --brand-navy: 221 40% 60%;
+    --brand-navy-soft: 220 30% 45%;
+    --brand-gold: 36 50% 66%;
+    --brand-gold-soft: 36 40% 40%;
+    --success: 145 55% 48%;
+    --danger: 6 70% 62%;
+    --warn: 30 71% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-gold ring-offset-2 ring-offset-background;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
