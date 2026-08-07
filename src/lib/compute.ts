@@ -6,6 +6,17 @@ export const MOIS = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
 
+/** Drops transactions tied to an "exclude from totals" account (e.g. a
+ *  Remboursements account) — used everywhere spending is analyzed (KPIs,
+ *  budget, charts) so reimbursements don't skew real spending numbers.
+ *  Comptes and Transactions intentionally keep using the unfiltered list —
+ *  those pages are ledgers, not analysis. */
+export function excludeFromStats(tx: TransactionRow[], accounts: AccountRow[]): TransactionRow[] {
+  const excluded = new Set(accounts.filter((a) => a.exclude_from_totals).map((a) => a.id));
+  if (excluded.size === 0) return tx;
+  return tx.filter((t) => !t.account_id || !excluded.has(t.account_id));
+}
+
 export function sumIn(rows: TransactionRow[]) {
   return rows.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
 }

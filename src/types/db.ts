@@ -7,6 +7,7 @@ export interface CategoryRow {
 export interface AccountRow {
   id: string;
   name: string;
+  exclude_from_totals: boolean;
 }
 
 export interface GoalRow {

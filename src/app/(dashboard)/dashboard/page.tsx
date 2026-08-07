@@ -22,10 +22,10 @@ export default async function Page({
 
   const user = await getCurrentUser();
   const supabase = await createClient();
-  const { categories, allTx, currentTx, previousTx } = await getMonthlyOverview(supabase, year, month);
+  const { categories, allTx, statsTx, currentTx, previousTx } = await getMonthlyOverview(supabase, year, month);
 
   const kpis = computeKpis(allTx, currentTx, previousTx, categories);
-  const monthly = computeMonthlySummariesForYear(allTx, year);
+  const monthly = computeMonthlySummariesForYear(statsTx, year);
   const categoryTotals = computeCategoryTotals(currentTx, categories).slice(0, 6);
   const budgetTotal = categories.reduce((s, c) => s + c.monthly_budget, 0);
   const depensesTotal = sumOut(currentTx);

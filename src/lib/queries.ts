@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountRow, AllowedEmailRow, CategoryRow, GoalRow, TransactionRow } from "@/types/db";
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES, DEFAULT_MONTHLY_BUDGET } from "@/types/db";
+import { excludeFromStats } from "@/lib/compute";
 
 function isoDate(year: number, monthIndex0: number, day: number) {
   // Built by hand rather than via `new Date(...).toISOString()`, which
@@ -57,7 +58,7 @@ export async function getCategories(supabase: SupabaseClient): Promise<CategoryR
 }
 
 export async function getAccounts(supabase: SupabaseClient): Promise<AccountRow[]> {
-  const { data, error } = await supabase.from("accounts").select("id,name").order("name");
+  const { data, error } = await supabase.from("accounts").select("id,name,exclude_from_totals").order("name");
   if (error) throw error;
   return data ?? [];
 }
@@ -85,7 +86,10 @@ export async function getAllTransactions(supabase: SupabaseClient): Promise<Tran
 
 /** Everything the Accueil page needs. Fetches transactions ONCE (`allTx` is
  *  needed anyway for the all-time balance) and derives the current/previous
- *  month slices in memory instead of two extra round trips to Supabase. */
+ *  month slices in memory instead of two extra round trips to Supabase.
+ *  `currentTx`/`previousTx` exclude "hors totaux" accounts (reimbursements,
+ *  transfers…) so revenue/expense KPIs reflect real spending; `allTx` stays
+ *  unfiltered since the solde total is real cash regardless of category. */
 export async function getDashboardData(supabase: SupabaseClient) {
   const cur = monthBounds(0);
   const prev = monthBounds(-1);
@@ -97,28 +101,32 @@ export async function getDashboardData(supabase: SupabaseClient) {
     getAllTransactions(supabase),
   ]);
 
-  const currentTx = allTx.filter((t) => inRange(t.occurred_on, cur.start, cur.end));
-  const previousTx = allTx.filter((t) => inRange(t.occurred_on, prev.start, prev.end));
+  const statsTx = excludeFromStats(allTx, accounts);
+  const currentTx = statsTx.filter((t) => inRange(t.occurred_on, cur.start, cur.end));
+  const previousTx = statsTx.filter((t) => inRange(t.occurred_on, prev.start, prev.end));
 
   return { categories, accounts, goals, allTx, currentTx, previousTx };
 }
 
 /** Same idea as getDashboardData but for an arbitrary, explicitly chosen
  *  month — used by Tableau de bord and Budget mensuel, whose period the user
- *  picks instead of always looking at "now". Doesn't fetch accounts: neither
- *  caller needs them. */
+ *  picks instead of always looking at "now". `statsTx` is `allTx` with "hors
+ *  totaux" accounts excluded — used for the yearly trend charts, which
+ *  otherwise mix reimbursements into every month's bar. */
 export async function getMonthlyOverview(supabase: SupabaseClient, year: number, monthIndex0: number) {
   const cur = monthRange(year, monthIndex0);
   const prev = monthRange(year, monthIndex0 - 1);
 
-  const [categories, allTx] = await Promise.all([
+  const [categories, accounts, allTx] = await Promise.all([
     getCategories(supabase),
+    getAccounts(supabase),
     getAllTransactions(supabase),
   ]);
 
-  const currentTx = allTx.filter((t) => inRange(t.occurred_on, cur.start, cur.end));
-  const previousTx = allTx.filter((t) => inRange(t.occurred_on, prev.start, prev.end));
+  const statsTx = excludeFromStats(allTx, accounts);
+  const currentTx = statsTx.filter((t) => inRange(t.occurred_on, cur.start, cur.end));
+  const previousTx = statsTx.filter((t) => inRange(t.occurred_on, prev.start, prev.end));
 
-  return { categories, allTx, currentTx, previousTx };
+  return { categories, allTx, statsTx, currentTx, previousTx };
 }
 

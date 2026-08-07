@@ -48,7 +48,11 @@ export async function addAccount(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   if (!name) throw new Error("Le nom du compte est requis");
 
-  const { error } = await supabase.from("accounts").insert({ user_id: user.id, name });
+  const { error } = await supabase.from("accounts").insert({
+    user_id: user.id,
+    name,
+    exclude_from_totals: formData.get("exclude_from_totals") === "on",
+  });
   if (error) throw new Error(error.message);
   revalidateEverywhere();
 }
@@ -56,6 +60,13 @@ export async function addAccount(formData: FormData) {
 export async function deleteAccount(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("accounts").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidateEverywhere();
+}
+
+export async function toggleAccountExclusion(id: string, excluded: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("accounts").update({ exclude_from_totals: excluded }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidateEverywhere();
 }

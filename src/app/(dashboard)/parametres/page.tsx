@@ -6,7 +6,7 @@ import { getAccounts, getAllowedEmails, getCategories } from "@/lib/queries";
 import { CategoryList } from "@/components/dashboard/category-list";
 import { AccountList } from "@/components/dashboard/account-list";
 import { AllowedEmailsList } from "@/components/dashboard/allowed-emails-list";
-import { addCategory, addAccount, deleteCategory, deleteAccount, addAllowedEmail, removeAllowedEmail } from "./actions";
+import { addCategory, addAccount, deleteCategory, deleteAccount, toggleAccountExclusion, addAllowedEmail, removeAllowedEmail } from "./actions";
 
 export default async function Page() {
   const supabase = await createClient();
@@ -49,8 +49,11 @@ export default async function Page() {
           </div>
 
           <div className="rounded-xl border border-border bg-card p-5 shadow-card">
-            <h3 className="mb-3 text-[13.5px] font-semibold text-foreground">Comptes</h3>
-            <AccountList accounts={accounts} onDelete={deleteAccount} />
+            <h3 className="mb-1 text-[13.5px] font-semibold text-foreground">Comptes</h3>
+            <p className="mb-3 text-[12px] text-muted-foreground">
+              Un compte marqué « Hors totaux » (ex. Remboursements) reste visible dans Transactions et son propre solde, mais n&apos;affecte plus le budget, le tableau de bord ni les analyses.
+            </p>
+            <AccountList accounts={accounts} onDelete={deleteAccount} onToggleExclusion={toggleAccountExclusion} />
             <details className="group mt-3">
               <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[12.5px] font-semibold text-navy dark:text-gold">
                 <span className="transition-transform group-open:rotate-45"><Icon name="plus" className="h-3.5 w-3.5" /></span>
@@ -61,6 +64,10 @@ export default async function Page() {
                   name="name" type="text" placeholder="Nom du compte" required
                   className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
                 />
+                <label className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+                  <input type="checkbox" name="exclude_from_totals" className="h-4 w-4 rounded border-border accent-gold" />
+                  Exclure des totaux (ex. Remboursements)
+                </label>
                 <button type="submit" className="self-start rounded-full bg-gold px-4 py-2 text-[12.5px] font-bold text-white hover:opacity-90">
                   Ajouter
                 </button>

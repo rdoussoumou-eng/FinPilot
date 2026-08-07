@@ -17,6 +17,10 @@ create table if not exists public.accounts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   name text not null,
+  -- true for accounts like "Remboursements": transactions still show in the
+  -- ledger and in this account's own balance, but are excluded from budget,
+  -- KPI and analysis totals so they don't distort real spending numbers.
+  exclude_from_totals boolean not null default false,
   created_at timestamptz not null default now()
 );
 

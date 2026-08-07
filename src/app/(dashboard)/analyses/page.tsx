@@ -2,8 +2,8 @@ import { TopBar } from "@/components/layout/topbar";
 import { PeriodSelect } from "@/components/dashboard/period-select";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getAllTransactions, getCategories } from "@/lib/queries";
-import { computeCategoryTotals, computeMonthlySummariesForYear, computeTopExpenses, sumOut } from "@/lib/compute";
+import { getAccounts, getAllTransactions, getCategories } from "@/lib/queries";
+import { computeCategoryTotals, computeMonthlySummariesForYear, computeTopExpenses, excludeFromStats, sumOut } from "@/lib/compute";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -12,21 +12,22 @@ export default async function Page({ searchParams }: { searchParams: { year?: st
   const year = Number(searchParams.year) || new Date().getFullYear();
 
   const supabase = await createClient();
-  const [user, allTx, categories] = await Promise.all([
-    getCurrentUser(), getAllTransactions(supabase), getCategories(supabase),
+  const [user, allTx, categories, accounts] = await Promise.all([
+    getCurrentUser(), getAllTransactions(supabase), getCategories(supabase), getAccounts(supabase),
   ]);
+  const statsTx = excludeFromStats(allTx, accounts);
 
-  const top10 = computeTopExpenses(allTx, categories, 10);
-  const categoryTotals = computeCategoryTotals(allTx, categories);
-  const monthly = computeMonthlySummariesForYear(allTx, year);
+  const top10 = computeTopExpenses(statsTx, categories, 10);
+  const categoryTotals = computeCategoryTotals(statsTx, categories);
+  const monthly = computeMonthlySummariesForYear(statsTx, year);
 
   const avgDepMensuelle = monthly.reduce((s, m) => s + m.depenses, 0) / 12;
   const avgRevMensuel = monthly.reduce((s, m) => s + m.revenus, 0) / 12;
   const projectionAnnuelle = avgDepMensuelle * 12;
   const capaciteEpargne = avgRevMensuel - avgDepMensuelle;
-  const minDate = allTx.length ? allTx.reduce((m, t) => (t.occurred_on < m ? t.occurred_on : m), allTx[0].occurred_on) : null;
+  const minDate = statsTx.length ? statsTx.reduce((m, t) => (t.occurred_on < m ? t.occurred_on : m), statsTx[0].occurred_on) : null;
   const days = minDate ? Math.max(1, Math.round((Date.now() - new Date(minDate).getTime()) / 86_400_000)) : 1;
-  const moyQuotidienne = sumOut(allTx) / days;
+  const moyQuotidienne = sumOut(statsTx) / days;
   const ratio = avgRevMensuel ? capaciteEpargne / avgRevMensuel : 0;
   const indiceSante = ratio <= 0 ? 0 : ratio >= 0.3 ? 100 : Math.round((ratio / 0.3) * 100);
 

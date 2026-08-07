@@ -2,8 +2,8 @@ import { TopBar } from "@/components/layout/topbar";
 import { Icon } from "@/components/icon";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getAllTransactions } from "@/lib/queries";
-import { sumIn, sumOut } from "@/lib/compute";
+import { getAccounts, getAllTransactions } from "@/lib/queries";
+import { excludeFromStats, sumIn, sumOut } from "@/lib/compute";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -11,11 +11,12 @@ const YEARS = [2024, 2025, 2026, 2027, 2028];
 
 export default async function Page() {
   const supabase = await createClient();
-  const [user, allTx] = await Promise.all([getCurrentUser(), getAllTransactions(supabase)]);
+  const [user, allTx, accounts] = await Promise.all([getCurrentUser(), getAllTransactions(supabase), getAccounts(supabase)]);
+  const statsTx = excludeFromStats(allTx, accounts);
 
   const rows = YEARS.map((year) => {
     const yearStr = String(year);
-    const yearTx = allTx.filter((t) => t.occurred_on.slice(0, 4) === yearStr);
+    const yearTx = statsTx.filter((t) => t.occurred_on.slice(0, 4) === yearStr);
     const revenus = sumIn(yearTx), depenses = sumOut(yearTx);
     return { year, revenus, depenses, epargne: revenus - depenses, taux: revenus ? (revenus - depenses) / revenus : 0, count: yearTx.length };
   });
