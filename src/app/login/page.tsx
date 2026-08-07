@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signIn, signUp } from "./actions";
+import { signIn, signUp, requestPasswordReset } from "./actions";
 
 export const metadata = { title: "Connexion — Tableau de Bord Financier Premium" };
 
@@ -17,14 +17,15 @@ export const metadata = { title: "Connexion — Tableau de Bord Financier Premiu
 export default function LoginPage({
   searchParams,
 }: { searchParams: { mode?: string; error?: string; justSignedUp?: string; notice?: string; email?: string } }) {
-  const mode = searchParams.mode === "signup" ? "signup" : "signin";
+  const mode = searchParams.mode === "signup" ? "signup" : searchParams.mode === "reset" ? "reset" : "signin";
   const isSignup = mode === "signup";
+  const isReset = mode === "reset";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-navy to-[#142038] p-6">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-7 shadow-card">
         <p className="font-display text-lg font-bold text-foreground">
-          {isSignup ? "Créer un compte" : "Se connecter"}
+          {isReset ? "Mot de passe oublié" : isSignup ? "Créer un compte" : "Se connecter"}
         </p>
         <p className="mt-1 text-[12.5px] text-muted-foreground">
           Tableau de Bord Financier Premium
@@ -46,56 +47,86 @@ export default function LoginPage({
           </p>
         )}
 
-        <form id="authForm" action={isSignup ? signUp : signIn} className="mt-5 flex flex-col gap-3.5">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Email
-            </label>
-            <input
-              id="email" name="email" type="email" required autoComplete="email"
-              defaultValue={searchParams.email ?? ""}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Mot de passe
-            </label>
-            <input
-              id="password" name="password" type="password" required minLength={6}
-              autoComplete={isSignup ? "new-password" : "current-password"}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
-            />
-          </div>
+        {isReset ? (
+          <form action={requestPasswordReset} className="mt-5 flex flex-col gap-3.5">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Email
+              </label>
+              <input
+                id="email" name="email" type="email" required autoComplete="email"
+                defaultValue={searchParams.email ?? ""}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full rounded-full bg-gold py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
+            >
+              Envoyer le lien de réinitialisation
+            </button>
+          </form>
+        ) : (
+          <>
+            <form id="authForm" action={isSignup ? signUp : signIn} className="mt-5 flex flex-col gap-3.5">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Email
+                </label>
+                <input
+                  id="email" name="email" type="email" required autoComplete="email"
+                  defaultValue={searchParams.email ?? ""}
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Mot de passe
+                  </label>
+                  {!isSignup && (
+                    <Link href="/login?mode=reset" className="text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+                      Mot de passe oublié ?
+                    </Link>
+                  )}
+                </div>
+                <input
+                  id="password" name="password" type="password" required minLength={6}
+                  autoComplete={isSignup ? "new-password" : "current-password"}
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                />
+              </div>
 
-          <button
-            id="authSubmit"
-            type="submit"
-            className="w-full rounded-full bg-gold py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSignup ? "Créer mon compte" : "Se connecter"}
-          </button>
-        </form>
-        <script
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{
-            __html: `(function(){
-              var f=document.getElementById('authForm'),b=document.getElementById('authSubmit');
-              if(!f||!b) return;
-              f.addEventListener('submit', function(){
-                if (b.disabled) return;
-                b.disabled = true;
-                b.textContent = 'Un instant…';
-              });
-            })();`,
-          }}
-        />
+              <button
+                id="authSubmit"
+                type="submit"
+                className="w-full rounded-full bg-gold py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSignup ? "Créer mon compte" : "Se connecter"}
+              </button>
+            </form>
+            <script
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{
+                __html: `(function(){
+                  var f=document.getElementById('authForm'),b=document.getElementById('authSubmit');
+                  if(!f||!b) return;
+                  f.addEventListener('submit', function(){
+                    if (b.disabled) return;
+                    b.disabled = true;
+                    b.textContent = 'Un instant…';
+                  });
+                })();`,
+              }}
+            />
+          </>
+        )}
 
         <Link
-          href={isSignup ? "/login?mode=signin" : "/login?mode=signup"}
+          href={isReset ? "/login?mode=signin" : isSignup ? "/login?mode=signin" : "/login?mode=signup"}
           className="mt-4 block w-full text-center text-[12.5px] text-muted-foreground underline-offset-2 hover:underline"
         >
-          {isSignup ? "Déjà un compte ? Se connecter" : "Pas encore de compte ? En créer un"}
+          {isReset ? "Retour à la connexion" : isSignup ? "Déjà un compte ? Se connecter" : "Pas encore de compte ? En créer un"}
         </Link>
       </div>
     </div>

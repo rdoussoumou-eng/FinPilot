@@ -1,7 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+
+/** Vercel always sets x-forwarded-proto; falls back to https since the app
+ *  is never actually served over plain http outside of localhost dev. */
+function siteOrigin() {
+  const h = headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("host");
+  return `${proto}://${host}`;
+}
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
@@ -33,6 +43,21 @@ export async function signUp(formData: FormData) {
     redirect(`/login?mode=signup&error=${encodeURIComponent(error.message)}`);
   }
   redirect(`/login?mode=signin&email=${encodeURIComponent(email)}&justSignedUp=1`);
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const supabase = await createClient();
+  const email = String(formData.get("email") || "").trim();
+
+  if (email) {
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteOrigin()}/update-password`,
+    });
+  }
+
+  // Same message whether or not the address is registered — avoids leaking
+  // which emails have accounts.
+  redirect(`/login?mode=reset&notice=${encodeURIComponent("Si un compte existe avec cet email, un lien de réinitialisation vient d'être envoyé.")}`);
 }
 
 export async function signOut() {

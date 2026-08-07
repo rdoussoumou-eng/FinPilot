@@ -27,8 +27,14 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isPublic = request.nextUrl.pathname.startsWith("/login");
-  if (!user && !isPublic) {
+  const path = request.nextUrl.pathname;
+  const isPublic = path.startsWith("/login");
+  // The recovery link's session only exists client-side (URL hash/code) at
+  // the moment this first request lands — the server can't see it yet, so
+  // this route must stay reachable regardless of what `user` looks like here.
+  const isRecovery = path.startsWith("/update-password");
+
+  if (!user && !isPublic && !isRecovery) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
