@@ -2,14 +2,17 @@ import { TopBar } from "@/components/layout/topbar";
 import { Icon } from "@/components/icon";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getAccounts, getCategories } from "@/lib/queries";
+import { getAccounts, getAllowedEmails, getCategories } from "@/lib/queries";
 import { CategoryList } from "@/components/dashboard/category-list";
 import { AccountList } from "@/components/dashboard/account-list";
-import { addCategory, addAccount, deleteCategory, deleteAccount } from "./actions";
+import { AllowedEmailsList } from "@/components/dashboard/allowed-emails-list";
+import { addCategory, addAccount, deleteCategory, deleteAccount, addAllowedEmail, removeAllowedEmail } from "./actions";
 
 export default async function Page() {
   const supabase = await createClient();
-  const [user, categories, accounts] = await Promise.all([getCurrentUser(), getCategories(supabase), getAccounts(supabase)]);
+  const [user, categories, accounts, allowedEmails] = await Promise.all([
+    getCurrentUser(), getCategories(supabase), getAccounts(supabase), getAllowedEmails(supabase),
+  ]);
 
   return (
     <>
@@ -60,6 +63,29 @@ export default async function Page() {
                 />
                 <button type="submit" className="self-start rounded-full bg-gold px-4 py-2 text-[12.5px] font-bold text-white hover:opacity-90">
                   Ajouter
+                </button>
+              </form>
+            </details>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5 shadow-card sm:col-span-2">
+            <h3 className="mb-1 text-[13.5px] font-semibold text-foreground">Accès autorisés</h3>
+            <p className="mb-3 text-[12px] text-muted-foreground">
+              Seules ces adresses email peuvent créer un compte sur l&apos;application.
+            </p>
+            <AllowedEmailsList emails={allowedEmails} onDelete={removeAllowedEmail} />
+            <details className="group mt-3">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[12.5px] font-semibold text-navy dark:text-gold">
+                <span className="transition-transform group-open:rotate-45"><Icon name="plus" className="h-3.5 w-3.5" /></span>
+                Autoriser une adresse
+              </summary>
+              <form action={addAllowedEmail} className="mt-3 flex flex-col gap-2.5 border-t border-border pt-3 sm:flex-row sm:items-center">
+                <input
+                  name="email" type="email" placeholder="email@exemple.com" required
+                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                />
+                <button type="submit" className="self-start rounded-full bg-gold px-4 py-2 text-[12.5px] font-bold text-white hover:opacity-90">
+                  Autoriser
                 </button>
               </form>
             </details>

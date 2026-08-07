@@ -59,3 +59,20 @@ export async function deleteAccount(id: string) {
   if (error) throw new Error(error.message);
   revalidateEverywhere();
 }
+
+export async function addAllowedEmail(formData: FormData) {
+  const supabase = await createClient();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  if (!email) throw new Error("L'adresse email est requise");
+
+  const { error } = await supabase.from("allowed_emails").insert({ email });
+  if (error) throw new Error(error.message);
+  revalidatePath("/parametres");
+}
+
+export async function removeAllowedEmail(email: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("allowed_emails").delete().eq("email", email);
+  if (error) throw new Error(error.message);
+  revalidatePath("/parametres");
+}

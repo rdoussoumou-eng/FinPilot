@@ -17,6 +17,11 @@ export interface GoalRow {
   target_date: string | null;
 }
 
+export interface AllowedEmailRow {
+  email: string;
+  added_at: string;
+}
+
 export interface TransactionRow {
   id: string;
   occurred_on: string; // ISO date

@@ -60,3 +60,41 @@ create policy "goals: owner only" on public.goals
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "transactions: owner only" on public.transactions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Liste blanche d'emails autorisés à créer un compte. Gérée depuis
+-- Paramètres → Accès autorisés (n'importe quel utilisateur déjà connecté
+-- peut ajouter/retirer une adresse — application à petite échelle, cercle de
+-- confiance). Le déclencheur ci-dessous bloque toute inscription (via l'app
+-- ou un appel direct à l'API Supabase) dont l'email n'y figure pas.
+create table if not exists public.allowed_emails (
+  email text primary key,
+  added_at timestamptz not null default now()
+);
+
+alter table public.allowed_emails enable row level security;
+
+create policy "allowed_emails: authenticated can view" on public.allowed_emails
+  for select to authenticated using (true);
+create policy "allowed_emails: authenticated can add" on public.allowed_emails
+  for insert to authenticated with check (true);
+create policy "allowed_emails: authenticated can remove" on public.allowed_emails
+  for delete to authenticated using (true);
+
+create or replace function public.check_allowed_email()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.allowed_emails where lower(email) = lower(new.email)) then
+    raise exception 'signup_not_allowed';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists enforce_allowed_email on auth.users;
+create trigger enforce_allowed_email
+  before insert on auth.users
+  for each row execute function public.check_allowed_email();

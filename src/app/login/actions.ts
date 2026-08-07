@@ -40,6 +40,13 @@ export async function signUp(formData: FormData) {
     if (alreadyExists) {
       redirect(`/login?mode=signin&email=${encodeURIComponent(email)}&notice=${encodeURIComponent("Un compte existe déjà avec cet email — connectez-vous ci-dessous.")}`);
     }
+    // The allow-list trigger (see supabase/schema.sql) aborts the signup
+    // transaction with a raw Postgres exception — GoTrue never forwards that
+    // message to the client, only a generic "Database error saving new user".
+    const blockedByAllowList = /database error saving new user/i.test(error.message);
+    if (blockedByAllowList) {
+      redirect(`/login?mode=signup&email=${encodeURIComponent(email)}&error=${encodeURIComponent("Cette adresse n'est pas autorisée à créer un compte sur cette application. Contactez l'administrateur pour être ajouté.")}`);
+    }
     redirect(`/login?mode=signup&error=${encodeURIComponent(error.message)}`);
   }
   redirect(`/login?mode=signin&email=${encodeURIComponent(email)}&justSignedUp=1`);

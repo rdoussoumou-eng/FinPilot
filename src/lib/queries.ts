@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AccountRow, CategoryRow, GoalRow, TransactionRow } from "@/types/db";
+import type { AccountRow, AllowedEmailRow, CategoryRow, GoalRow, TransactionRow } from "@/types/db";
 import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES, DEFAULT_MONTHLY_BUDGET } from "@/types/db";
 
 function isoDate(year: number, monthIndex0: number, day: number) {
@@ -64,6 +64,12 @@ export async function getAccounts(supabase: SupabaseClient): Promise<AccountRow[
 
 export async function getGoals(supabase: SupabaseClient): Promise<GoalRow[]> {
   const { data, error } = await supabase.from("goals").select("id,name,target_amount,current_amount,target_date").order("created_at");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getAllowedEmails(supabase: SupabaseClient): Promise<AllowedEmailRow[]> {
+  const { data, error } = await supabase.from("allowed_emails").select("email,added_at").order("added_at");
   if (error) throw error;
   return data ?? [];
 }
